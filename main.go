@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -78,7 +79,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Listening on:", options.httpAddr)
 
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, chain.Generate(options.maxOutputSize))
+			var jsonResp struct {
+				Text string `json:"text"`
+			}
+			jsonResp.Text = chain.Generate(options.maxOutputSize)
+			js, err := json.Marshal(jsonResp)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			w.Write(js)
 		})
 
 		err = http.ListenAndServe(options.httpAddr, nil)
