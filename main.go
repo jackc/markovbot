@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pop_markov/markov"
+	"github.com/jackc/markovbot/markov"
 )
 
 var options struct {
