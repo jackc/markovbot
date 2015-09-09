@@ -17,6 +17,7 @@ func (p Prefix) Key() string {
 type Chain struct {
 	chain    map[string][]string
 	prefixes []Prefix
+	starters []Prefix
 }
 
 func (c *Chain) Add(prefix Prefix, word string) {
@@ -25,13 +26,7 @@ func (c *Chain) Add(prefix Prefix, word string) {
 }
 
 func (c *Chain) Generate(maxWords int) string {
-	var prefix Prefix
-	for {
-		prefix = c.prefixes[rand.Int63n(int64(len(c.prefixes)))]
-		if unicode.IsUpper(rune(prefix[0][0])) {
-			break
-		}
-	}
+	prefix := c.starters[rand.Int63n(int64(len(c.starters)))]
 
 	outputWords := make([]string, len(prefix))
 	copy(outputWords, []string(prefix))
@@ -39,6 +34,9 @@ func (c *Chain) Generate(maxWords int) string {
 	var stopIndexes []int
 	for len(outputWords) < maxWords {
 		suffixes := c.chain[prefix.Key()]
+		if len(suffixes) == 0 {
+			break
+		}
 		next := suffixes[rand.Intn(len(suffixes))]
 		outputWords = append(outputWords, next)
 		copy(prefix, prefix[1:])
@@ -74,6 +72,13 @@ func NewChain(r io.Reader, prefixSize int) (c *Chain, err error) {
 		prefix := Prefix(words[i : i+prefixSize])
 		c.Add(prefix, words[i+prefixSize])
 		c.prefixes = append(c.prefixes, prefix)
+		if unicode.IsUpper(rune(prefix[0][0])) {
+			c.starters = append(c.starters, prefix)
+		}
+	}
+
+	if len(c.starters) == 0 {
+		c.starters = c.prefixes
 	}
 
 	return c, nil
